@@ -1,16 +1,24 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { PdfViewerComponent } from './pdf-viewer/pdf-viewer.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [PdfViewerComponent],
   template: `
-    <h1>Welcome to {{title}}!</h1>
-
-    <router-outlet />
+    <app-pdf-viewer></app-pdf-viewer>
   `,
-  styles: [],
+  styles: [`
+    :host {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  `],
 })
 export class AppComponent {
-  title = 'first-ng-app';
+  title = 'PDF Reader';
 }
