@@ -28,35 +28,31 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
         <span class="arrow">&#10095;</span>
       </button>
       
-      <!-- Bottom toolbar for mobile -->
-      <div class="bottom-toolbar">
-        <button 
-          class="bottom-btn" 
-          (click)="prevPage()" 
-          [disabled]="page === 1"
-          [class.disabled]="page === 1"
-        >
-          <span class="bottom-arrow">&#10094;</span>
-        </button>
-        
-        <div class="bottom-page-info">
-          <span>{{ page }} / {{ totalPages }}</span>
+      <!-- Mobile bottom toolbar -->
+      <div class="mobile-toolbar">
+        <div class="mobile-toolbar-nav">
+          <button 
+            class="mobile-nav-btn" 
+            (click)="prevPage()" 
+            [disabled]="page === 1"
+          >
+            <span>&#10094;</span>
+          </button>
+          <span class="mobile-page-info">{{ page }}/{{ totalPages }}</span>
+          <button 
+            class="mobile-nav-btn" 
+            (click)="nextPage()" 
+            [disabled]="page === totalPages"
+          >
+            <span>&#10095;</span>
+          </button>
         </div>
         
-        <button 
-          class="bottom-btn" 
-          (click)="nextPage()" 
-          [disabled]="page === totalPages"
-          [class.disabled]="page === totalPages"
-        >
-          <span class="bottom-arrow">&#10095;</span>
-        </button>
-        
-        <div class="divider"></div>
-        
-        <button class="zoom-control-btn" (click)="zoomOut()" title="Zoom Out">−</button>
-        <span>{{ (zoom * 100).toFixed(0) }}%</span>
-        <button class="zoom-control-btn" (click)="zoomIn()" title="Zoom In">+</button>
+        <div class="mobile-toolbar-zoom">
+          <button class="mobile-zoom-btn" (click)="zoomOut()">−</button>
+          <span class="mobile-zoom-info">{{ (zoom * 100).toFixed(0) }}%</span>
+          <button class="mobile-zoom-btn" (click)="zoomIn()">+</button>
+        </div>
       </div>
       
       <!-- Top controls -->
@@ -137,66 +133,62 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
       gap: 10px;
     }
     
-    /* Bottom toolbar for mobile */
-    .bottom-toolbar {
+    /* Mobile toolbar styles */
+    .mobile-toolbar {
       display: none;
       position: fixed;
       bottom: 0;
       left: 0;
-      right: 0;
+      width: 100%;
       background-color: rgba(51, 51, 51, 0.9);
-      color: white;
-      padding: 15px;
+      padding: 10px 0;
       z-index: 100;
+      flex-direction: column;
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
     }
     
-    .bottom-btn {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
+    .mobile-toolbar-nav, .mobile-toolbar-zoom {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5px 0;
+      gap: 20px;
+    }
+    
+    .mobile-toolbar-zoom {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 10px;
+      margin-top: 5px;
+    }
+    
+    .mobile-nav-btn, .mobile-zoom-btn {
       background-color: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 18px;
       cursor: pointer;
     }
     
-    .bottom-btn:active {
+    .mobile-nav-btn:active, .mobile-zoom-btn:active {
       background-color: rgba(255, 255, 255, 0.3);
     }
     
-    .bottom-page-info {
+    .mobile-nav-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .mobile-page-info, .mobile-zoom-info {
+      color: white;
       font-size: 16px;
       min-width: 60px;
       text-align: center;
-    }
-    
-    .divider {
-      height: 30px;
-      width: 1px;
-      background-color: rgba(255, 255, 255, 0.3);
-      margin: 0 10px;
-    }
-    
-    .zoom-control-btn {
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      background-color: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
     }
     
     .page-input {
@@ -320,16 +312,16 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
         display: none; /* Hide top controls on mobile */
       }
       
-      .nav-btn {
-        display: none; /* Hide side navigation on mobile */
+      .mobile-toolbar {
+        display: flex; /* Show mobile toolbar */
       }
       
-      .bottom-toolbar {
-        display: flex; /* Show bottom toolbar on mobile */
+      .nav-btn {
+        display: none; /* Hide side buttons on mobile */
       }
       
       pdf-viewer {
-        height: calc(100vh - 75px) !important; /* Adjust for bottom toolbar */
+        height: calc(100vh - 120px) !important; /* Adjust for mobile toolbar */
       }
     }
   `
@@ -339,33 +331,18 @@ export class PdfViewerComponent implements OnInit {
   pdfSrc = 'https://brisbanerotary.org.au/documents/en-us/d20ee52d-e62b-4fe8-a3bf-c58cb3a5fded/1';
   page = 1;
   totalPages = 0;
-  zoom = 0.6; // Default zoom for desktop
+  zoom = 1.0; // Set default zoom to 100%
   error: string | null = null;
   loading = true;
   progress = 0;
   
   constructor() {
     console.log('PDF Viewer initialized with source:', this.pdfSrc);
-    
-    // Set default zoom to 100% on mobile devices
-    if (window.innerWidth <= 768) {
-      this.zoom = 1.0;
-    }
   }
 
   ngOnInit(): void {
     // Set PDF.js worker path to make sure it works
     (window as any).pdfWorkerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    
-    // Listen for resize events to adjust zoom based on screen size
-    window.addEventListener('resize', this.handleResize.bind(this));
-  }
-  
-  handleResize(): void {
-    // Adjust zoom when resizing between mobile and desktop
-    if (window.innerWidth <= 768 && this.zoom < 1.0) {
-      this.zoom = 1.0;
-    }
   }
 
   prevPage(): void {
